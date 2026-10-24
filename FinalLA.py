@@ -58,12 +58,12 @@ def detect_lanes(img,roi_vertices):
             slope_threshold = 0.5
             if abs(slope) > slope_threshold:
                 if slope < 0:
-                    # Calculate the length of the line using the Euclidean distance formula
+                  
                     line_length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
                     if left_line is None or line_length > left_line[1]:
                         left_line = (line, line_length)
                 else:
-                    # Calculate the length of the line using the Euclidean distance formula
+                    
                     line_length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
                     if right_line is None or line_length > right_line[1]:
                         right_line = (line, line_length)
@@ -76,11 +76,11 @@ def detect_lanes(img,roi_vertices):
         x1, y1, x2, y2 = right_line[0][0]
         cv2.line(line_img, (x1, y1), (x2, y2), (255, 0, 0), 3)  # Longest Right lane (blue)
 
-    # Convert the original image to grayscale
+  
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
    
-    # Check if the purple trapezoid touches the red line (left lane)
+   
     purple_intersects_red = False
     tolerance = 10  # Adjust the tolerance value as needed
 
@@ -120,7 +120,7 @@ def detect_lanes(img,roi_vertices):
     return result, purple_intersects_red, purple_intersects_blue
 
 def lane_detection_process(roi_vertices, purple_red, purple_blue):
-    # Initialize the mss screen capture object
+    
     screen_capture = mss.mss()
 
     while True:
@@ -131,17 +131,16 @@ def lane_detection_process(roi_vertices, purple_red, purple_blue):
         screenshot = screen_capture.grab({"top": 0, "left": 0, "width": screen_width // 2, "height": screen_height})
         frame = np.array(Image.frombytes("RGB", screenshot.size, screenshot.bgra, "raw", "BGRX"))
 
-        # Perform lane detection on the captured frame
         result_frame, purple_intersects_red, purple_intersects_blue = detect_lanes(frame, roi_vertices)
 
-        # Update the shared variables
+     
         purple_red.value = purple_intersects_red
         purple_blue.value = purple_intersects_blue
 
-        # Display the processed frame with lane detection
+       
         cv2.imshow('Lane Detection', result_frame)
 
-        # Check if the user presses 'q' to exit the loop
+    
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -149,14 +148,13 @@ def lane_detection_process(roi_vertices, purple_red, purple_blue):
 
 def key_pressing_process(purple_red, purple_blue):
     while True:
-        # Simulate 'd' key press for 200 milliseconds if purple trapezoid touches the red line
+     
         if purple_red.value:
             keyboard.press('d')
             time.sleep(0.05)
             keyboard.release('d')
             time.sleep(1)
 
-        # Simulate 'a' key press for 200 milliseconds if purple trapezoid touches the blue line
         if purple_blue.value:
             keyboard.press('a')
             time.sleep(0.05)
@@ -182,18 +180,18 @@ if __name__ == "__main__":
                              (width // 2 + bottom_width // 2 - shift_amount, height // 2 + trapezoid_height),
                              (width // 2 - bottom_width // 2 - shift_amount, height // 2 + trapezoid_height)]], dtype=np.int32)
 
-    # Create shared variables for inter-process communication
+ 
     purple_intersects_red = multiprocessing.Value('i', 0)
     purple_intersects_blue = multiprocessing.Value('i', 0)
 
-    # Create processes for lane detection and key pressing
+  
     lane_detection_proc = multiprocessing.Process(target=lane_detection_process, args=(roi_vertices, purple_intersects_red, purple_intersects_blue))
     key_pressing_proc = multiprocessing.Process(target=key_pressing_process, args=(purple_intersects_red, purple_intersects_blue))
 
-    # Start the processes
+
     lane_detection_proc.start()
     key_pressing_proc.start()
 
-    # Wait for both processes to finish
+
     lane_detection_proc.join()
     key_pressing_proc.join()
